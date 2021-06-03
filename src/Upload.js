@@ -26,17 +26,45 @@ class Upload extends Component {
 
     // Get file details
     getFileDetails() {
+        const that = this;
         let fileReader = new FileReader();
+
         fileReader.onloadend = async(e) => {
-            const content = fileReader.result;
-            const details = yaml.safeLoad(content);
-            this.setState(
-                {fileObj: details},
-                () => {
-                    console.log(details);
-                    this.parseFileDetails(details);
-                }
-            );
+            try {
+                const details = yaml.safeLoad(fileReader.result);
+
+                // Validate API file
+                Axios
+                .post(
+                    `${apiPrefix}/validate`, 
+                    {
+                        "apiVersion": parseInt(details['swagger'] !== undefined ? details['swagger'] : details['openapi']),
+                        "file": details,
+                    }
+                )
+                .then(function (response) {
+                    let valid = response.data['response']
+                    console.log(valid);
+                    console.log(typeof(valid));
+
+                    if (!valid) {
+                        alert("Invalid File");
+                        that.setState({selectedFile: null});
+                        document.getElementById("file").value = "";
+                    } else {
+                        that.setState(
+                            {fileObj: details},
+                            () => {
+                                that.parseFileDetails(details);
+                            }
+                        );
+                    }
+                })
+            } catch (error) {
+                alert("Invalid File");
+                that.setState({selectedFile: null});
+                document.getElementById("file").value = "";
+            }
         };
         fileReader.readAsBinaryString(this.state.selectedFile);
     }
@@ -94,7 +122,7 @@ class Upload extends Component {
 
                 <div>
                     <label>Choose API file to upload:</label>
-                    <input type="file" name="api" accept=".yaml" onChange={this.handleFileChange} />
+                    <input id="file" type="file" name="api" accept=".yaml" onChange={this.handleFileChange} />
                 </div>
 
                 <br />
