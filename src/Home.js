@@ -2,6 +2,7 @@ import { Component } from "react";
 import Axios from 'axios';
 import yaml from 'js-yaml';
 import fileDownload from 'js-file-download';
+import Table from 'react-bootstrap/Table'
 import {
     apiPrefix
 } from './Config';
@@ -11,109 +12,44 @@ class Home extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            versionSelection: 2,
-            selectedFile: null,
-            fileNameList: [],
+            fileList: [],
         }
-        this.handleVersionChange = this.handleVersionChange.bind(this)
-        this.handleFileChange = this.handleFileChange.bind(this);
-        this.handleUploadButtonClick = this.handleUploadButtonClick.bind(this);
-        this.handleFileLinkClick = this.handleFileLinkClick.bind(this);
-        this.handleDropButtonClicked = this.handleDropButtonClicked.bind(this);
+        this.handleDownloadClick = this.handleDownloadClick.bind(this);
+        this.handleClearButtonClicked = this.handleClearButtonClicked.bind(this);
     }
 
     componentDidMount() {
         this.getFileList();
     }
 
-    handleVersionChange(evt) {
-        this.setState(
-            {
-                versionSelection: evt.target.value === 'v2' ? 2 : 3,
-            }
-        )
-    }
-
-    handleFileChange(evt) {
-        this.setState({ selectedFile: evt.target.files[0] });// Get file data
-
-        // Get file data
-        const data = new FormData();
-        data.append('file', evt.target.files[0]);
-
-        Axios
-        .post(`${apiPrefix}/details`, data)
-        .then(function (response) {
-            alert(response);
-        })
-        .catch(function (err) {
-            alert(err);
-        });
-    }
-
-    // Get file name list from the database
+    // Get file list from the database
     getFileList() {
         let that = this;
         Axios
         .get(`${apiPrefix}/list`)
         .then(function (response) {
-            let fileNameList = response.data['names'];
-            console.log(fileNameList);
-            that.setState({fileNameList: fileNameList});
+            let fileList = response.data['response'];
+            // console.log(fileList);
+            that.setState({fileList: fileList});
         })
         .catch(function (err) {
             console.log(err);
         });
     }
 
-    handleUploadButtonClick() {
-        const that = this;
-
-        // Get file data
-        const data = new FormData();
-        data.append('file', this.state.selectedFile);
-
-        Axios
-        .post(`${apiPrefix}/upload/${that.state.versionSelection}`, data)
-        .then(function (response) {
-            console.log(response.data['response']);
-            alert(response.data['response']);
-        })
-        .then(function() {
-            that.getFileList();
-        })
-        .catch(function (err) {
-            alert(err);
-        });
-    }
-
-    handleFileLinkClick(fileName) {
+    // Download file
+    handleDownloadClick(fileName) {
         Axios
         .get(`${apiPrefix}/download/${fileName}`)
         .then(function (response) {
             const obj = response.data['file'][0][0];
+            // console.log(obj);
             let yamlStr = yaml.safeDump(obj);
-            fileDownload(yamlStr, fileName);            
+            fileDownload(yamlStr, fileName);
         })
         .catch(function (err) {
             alert(err);
         })
-    }
-
-    handleDropButtonClicked() {
-        const that = this;
-
-        Axios
-        .delete(`${apiPrefix}/drop`)
-        .then(function (response) {
-            alert(response.data['response']);
-        })
-        .then(function() {
-            that.getFileList();
-        })
-        .catch(function (err) {
-            console.log(err);
-        });
     }
 
     // File info
@@ -140,99 +76,58 @@ class Home extends Component {
         }
     };
 
-    // API file details
-    apiDetails() {
-        if (this.state.selectedFile) {
-            return (
-                <div>
-                    <h5>Models:</h5>
-                    
-                </div>
-            );
-        } else {
-            return (
-                <div>
-                    <br />
-                    <h5>Empty</h5>
-                </div>
-            );
-        }
+    handleClearButtonClicked() {
+        const that = this;
+
+        Axios
+        .delete(`${apiPrefix}/clear`)
+        .then(function (response) {
+            alert(response.data['response']);
+        })
+        .then(function() {
+            that.getFileList();
+        })
+        .catch(function (err) {
+            console.log(err);
+        });
     }
 
     render() {
         return (
             <div>
-                <h2>Swagger API Service</h2>
+                <br />
+                <h3>Files</h3>
+                <br />
 
-                {/* Upload */}
+                {/* Table View */}
                 <div>
-                    <h3>Upload</h3>
-                    <div>
-                        <p>API version: </p>
-                        <form>
-                            <label>
-                                <input 
-                                    type="radio" 
-                                    value="v2" 
-                                    checked={this.state.versionSelection === 2}
-                                    onChange={this.handleVersionChange}    
-                                />
-                                v2
-                            </label>
-                            <label>
-                                <input 
-                                    type="radio" 
-                                    value="v3" 
-                                    checked={this.state.versionSelection === 3} 
-                                    onChange={this.handleVersionChange}
-                                />
-                                v3
-                            </label>
-                        </form>
-                    </div>
-                    
-                    <input type="file" name="api" onChange={this.handleFileChange} />
-                    <button onClick={this.handleUploadButtonClick}>
-                        Upload
-                    </button>
-                </div>
-
-                <br />
-                <br />
-                
-                {/* Details */}
-                <div>
-                    <h3>Details</h3>
-                    <div>
-                        {this.apiDetails()}
-                    </div>
-                </div>
-
-                <br />
-                <br />
-                
-                {/* Download */}
-                <div>
-                    <h3>Download</h3>
-                    <div>
-                        <h4>Download .yaml files</h4>
-                        <div>
-                            {this.state.fileNameList.map((fileName) => 
-                                <div key={fileName}>
+                    <Table striped bordered hover>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>API Version</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {this.state.fileList.map((file) => 
+                                <tr key={file['name']}>
+                                    <td>{file['title']}</td>
+                                    <td>{file['apiVersion']}</td>
                                     <Link 
-                                        key={fileName} 
-                                        onClick={() => this.handleFileLinkClick(fileName)}
+                                        key={file['name']} 
+                                        onClick={() => this.handleDownloadClick(file['name'])}
                                     >
-                                        {fileName}
+                                        download
                                     </Link>
-                                </div>
+                                </tr>
                             )}
-                        </div>
-                    </div>
+                        </tbody>
+                    </Table>
+                </div>
 
-                    <div>
-                        <button onClick={this.handleDropButtonClicked}>Drop Table</button>
-                    </div>
+                <div>
+                    <button onClick={this.handleClearButtonClicked}>Clear Table</button>
                 </div>
             </div>
         );
