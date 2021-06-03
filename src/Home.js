@@ -52,30 +52,6 @@ class Home extends Component {
         })
     }
 
-    // File info
-    fileData() {
-        if (this.state.selectedFile) {
-            return (
-                <div>
-                    <h4>File Details:</h4>
-                    <p>File Name: {this.state.selectedFile.name}</p>
-                    <p>File Type: {this.state.selectedFile.type}</p>
-                    <p>
-                        Last Modified:{" "}
-                        {this.state.selectedFile.lastModifiedDate.toDateString()}
-                    </p>
-                </div>
-            );
-        } else {
-            return (
-                <div>
-                    <br />
-                    <h4>Choose before Pressing the Upload button</h4>
-                </div>
-            );
-        }
-    };
-
     handleClearButtonClicked() {
         const that = this;
 

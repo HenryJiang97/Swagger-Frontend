@@ -4,6 +4,7 @@ import yaml from 'js-yaml';
 import {
     apiPrefix
 } from './Config';
+import { Col, Form } from "react-bootstrap";
 
 class Upload extends Component {
     constructor(props) {
@@ -44,8 +45,6 @@ class Upload extends Component {
                 )
                 .then(function (response) {
                     let valid = response.data['response']
-                    console.log(valid);
-                    console.log(typeof(valid));
 
                     if (!valid) {
                         alert("Invalid File");
@@ -73,28 +72,31 @@ class Upload extends Component {
     parseFileDetails(details) {
         // Get api version
         let apiVersion = parseInt(details['swagger'] !== undefined ? details['swagger'] : details['openapi']);
-        console.log(`API version: ${apiVersion}`);
+        // console.log(`API version: ${apiVersion}`);
 
         // Get info
         let info = details['info'];
-        console.log(`Info: ${info}`);
+        // console.log(`Info: ${info}`);
 
         // Get paths
         let paths = details['paths'];
-        console.log(`Paths: ${paths}`);
+        // console.log(`Paths: ${paths}`);
 
         // Get definitions
         let definitions = apiVersion === 2 ? details['definitions'] : details['components']['schemas'];
-        console.log(`Definitions: ${definitions}`);
+        // console.log(`Definitions: ${definitions}`);
 
-        this.setState({
-            fileDetails: {
-                apiVersion: apiVersion,
-                info: info,
-                paths: paths,
-                definitions: definitions,
-            }
-        })
+        this.setState( 
+            {
+                fileDetails: {
+                    apiVersion: apiVersion,
+                    info: info,
+                    paths: paths,
+                    definitions: definitions,
+                }
+            },
+            () => console.log(this.state.fileDetails)
+        );
     }
 
     handleUploadButtonClick() {
@@ -115,6 +117,115 @@ class Upload extends Component {
         });
     }
 
+    // File Data
+    fileData() {
+        return (
+            <div>
+                <Form>
+                    <Form.Group>
+                        <Form.Group as={Form.Row}>
+                            <Form.Label column sm={1}>
+                                <b>Basic Info</b>
+                            </Form.Label>
+                        </Form.Group>
+
+                        <Form.Group as={Form.Row}>
+                            <Form.Label column sm={2}>
+                                Title
+                            </Form.Label>
+                            <Col sm={10}>
+                                <Form.Control 
+                                    value={this.state.fileDetails === null || this.state.fileDetails['info']['title'] === undefined ? "" : this.state.fileDetails['info']['title']}
+                                />
+                            </Col>
+                        </Form.Group>
+
+                        <Form.Group as={Form.Row}>
+                            <Form.Label column sm={2}>
+                                Description
+                            </Form.Label>
+                            <Col sm={10}>
+                                <Form.Control 
+                                    value={this.state.fileDetails === null || this.state.fileDetails['info']['description'] === undefined ? "" : this.state.fileDetails['info']['description']}
+                                />
+                            </Col>
+                        </Form.Group>
+
+                        <Form.Group as={Form.Row}>
+                            <Form.Label column sm={2}>
+                                Version
+                            </Form.Label>
+                            <Col sm={10}>
+                                <Form.Control 
+                                    value={this.state.fileDetails === null || this.state.fileDetails['info']['version'] === undefined ? "" : this.state.fileDetails['info']['version']}
+                                />
+                            </Col>
+                        </Form.Group>
+
+                        <Form.Group as={Form.Row}>
+                            <Form.Label column sm={2}>
+                                API Version
+                            </Form.Label>
+                            <Col sm={10}>
+                                <Form.Control 
+                                    value={this.state.fileDetails === null || this.state.fileDetails['apiVersion'] === undefined ? "" : this.state.fileDetails['apiVersion']}
+                                />
+                            </Col>
+                        </Form.Group>
+                    </Form.Group>
+                    
+                    <Form.Group>
+                        <Form.Group as={Form.Row}>
+                            <Form.Label column sm={1}>
+                                <b>Paths</b>
+                            </Form.Label>
+                        </Form.Group>
+
+                        {
+                            this.state.fileDetails === null || this.state.fileDetails['paths'] === undefined
+                            ?
+                            <Form.Group as={Form.Row}>
+                                <Form.Label column sm={2}>
+                                    Nothing
+                                </Form.Label>
+                            </Form.Group>
+                            :
+                            Object
+                            .keys(this.state.fileDetails['paths'])
+                            .map(function(title, value) {
+                                return (
+                                    <Form.Group as={Form.Row}>
+                                        <Form.Label column sm={2}>
+                                            {title}
+                                        </Form.Label>
+
+                                        <Form.Label column sm={2}>
+                                            {value}
+                                        </Form.Label>
+                                        
+                                        {/* {
+                                            Object
+                                            .keys(value)
+                                            .map(function(method, value) {
+                                                return (
+                                                    <Form.Group as={Form.Row}>
+                                                        <Form.Label column sm={3}>
+                                                            {method}
+                                                        </Form.Label>
+                                                    </Form.Group>
+                                                );
+                                            })
+                                        } */}
+                                    </Form.Group>
+                                );
+                            })
+                        }
+                    </Form.Group>
+                </Form>
+            </div>
+        );
+    };
+
     render() {
         return (
             <div>
@@ -130,6 +241,12 @@ class Upload extends Component {
                 <div>
                     <button onClick={this.handleUploadButtonClick}>Upload</button>
                 </div>
+
+                <br />
+                <br />
+
+                {/* Details */}
+                {this.fileData()}
             </div>
         )
     }
