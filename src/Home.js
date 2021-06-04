@@ -90,12 +90,27 @@ class Home extends Component {
                                 <tr key={file['name']}>
                                     <td>{file['title']}</td>
                                     <td>{file['apiVersion']}</td>
-                                    <Link 
-                                        key={file['name']} 
-                                        onClick={() => this.handleDownloadClick(file['name'])}
-                                    >
-                                        download
-                                    </Link>
+                                    <td>
+                                        <Link
+                                            key="details" 
+                                            to={{
+                                                pathname: '/details',
+                                                query: {
+                                                    fileName: file['name'],
+                                                },
+                                            }}
+                                        >
+                                            Details
+                                        </Link>
+                                        <Link 
+                                            key="download"
+                                            onClick={() => this.handleDownloadClick(file['name'])}
+                                            to={{}}
+                                        >
+                                            Download
+                                        </Link>
+                                    </td>
+                                    
                                 </tr>
                             )}
                         </tbody>

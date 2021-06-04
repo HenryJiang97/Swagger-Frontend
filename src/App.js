@@ -1,6 +1,7 @@
 import { Nav, Navbar } from 'react-bootstrap';
 import { Route, Switch } from 'react-router-dom';
 import './App.css';
+import Details from './Details';
 import Home from './Home';
 import Upload from './Upload';
 
@@ -20,6 +21,7 @@ function App() {
       <Switch>
         <Route exact path="/" component={Home} />
         <Route path="/upload" component={Upload} />
+        <Route path="/details" component={Details} />
       </Switch>
     </div>
   );

@@ -1,10 +1,14 @@
 import { Component } from "react";
 import Axios from 'axios';
 import yaml from 'js-yaml';
+import './Upload.css';
 import {
     apiPrefix
 } from './Config';
-import { Col, Form } from "react-bootstrap";
+import {
+    parseFile
+} from './services/ParseFile';
+import { apiData } from "./services/ApiData";
 
 class Upload extends Component {
     constructor(props) {
@@ -70,33 +74,10 @@ class Upload extends Component {
 
     // Parse file details
     parseFileDetails(details) {
-        // Get api version
-        let apiVersion = parseInt(details['swagger'] !== undefined ? details['swagger'] : details['openapi']);
-        // console.log(`API version: ${apiVersion}`);
-
-        // Get info
-        let info = details['info'];
-        // console.log(`Info: ${info}`);
-
-        // Get paths
-        let paths = details['paths'];
-        // console.log(`Paths: ${paths}`);
-
-        // Get definitions
-        let definitions = apiVersion === 2 ? details['definitions'] : details['components']['schemas'];
-        // console.log(`Definitions: ${definitions}`);
-
-        this.setState( 
-            {
-                fileDetails: {
-                    apiVersion: apiVersion,
-                    info: info,
-                    paths: paths,
-                    definitions: definitions,
-                }
-            },
-            () => console.log(this.state.fileDetails)
-        );
+        let fileDetails = parseFile(details);
+        this.setState({
+            fileDetails: fileDetails,
+        })
     }
 
     handleUploadButtonClick() {
@@ -116,115 +97,6 @@ class Upload extends Component {
             alert(err);
         });
     }
-
-    // File Data
-    fileData() {
-        return (
-            <div>
-                <Form>
-                    <Form.Group>
-                        <Form.Group as={Form.Row}>
-                            <Form.Label column sm={1}>
-                                <b>Basic Info</b>
-                            </Form.Label>
-                        </Form.Group>
-
-                        <Form.Group as={Form.Row}>
-                            <Form.Label column sm={2}>
-                                Title
-                            </Form.Label>
-                            <Col sm={10}>
-                                <Form.Control 
-                                    value={this.state.fileDetails === null || this.state.fileDetails['info']['title'] === undefined ? "" : this.state.fileDetails['info']['title']}
-                                />
-                            </Col>
-                        </Form.Group>
-
-                        <Form.Group as={Form.Row}>
-                            <Form.Label column sm={2}>
-                                Description
-                            </Form.Label>
-                            <Col sm={10}>
-                                <Form.Control 
-                                    value={this.state.fileDetails === null || this.state.fileDetails['info']['description'] === undefined ? "" : this.state.fileDetails['info']['description']}
-                                />
-                            </Col>
-                        </Form.Group>
-
-                        <Form.Group as={Form.Row}>
-                            <Form.Label column sm={2}>
-                                Version
-                            </Form.Label>
-                            <Col sm={10}>
-                                <Form.Control 
-                                    value={this.state.fileDetails === null || this.state.fileDetails['info']['version'] === undefined ? "" : this.state.fileDetails['info']['version']}
-                                />
-                            </Col>
-                        </Form.Group>
-
-                        <Form.Group as={Form.Row}>
-                            <Form.Label column sm={2}>
-                                API Version
-                            </Form.Label>
-                            <Col sm={10}>
-                                <Form.Control 
-                                    value={this.state.fileDetails === null || this.state.fileDetails['apiVersion'] === undefined ? "" : this.state.fileDetails['apiVersion']}
-                                />
-                            </Col>
-                        </Form.Group>
-                    </Form.Group>
-                    
-                    <Form.Group>
-                        <Form.Group as={Form.Row}>
-                            <Form.Label column sm={1}>
-                                <b>Paths</b>
-                            </Form.Label>
-                        </Form.Group>
-
-                        {
-                            this.state.fileDetails === null || this.state.fileDetails['paths'] === undefined
-                            ?
-                            <Form.Group as={Form.Row}>
-                                <Form.Label column sm={2}>
-                                    Nothing
-                                </Form.Label>
-                            </Form.Group>
-                            :
-                            Object
-                            .keys(this.state.fileDetails['paths'])
-                            .map(function(title, value) {
-                                return (
-                                    <Form.Group as={Form.Row}>
-                                        <Form.Label column sm={2}>
-                                            {title}
-                                        </Form.Label>
-
-                                        <Form.Label column sm={2}>
-                                            {value}
-                                        </Form.Label>
-                                        
-                                        {/* {
-                                            Object
-                                            .keys(value)
-                                            .map(function(method, value) {
-                                                return (
-                                                    <Form.Group as={Form.Row}>
-                                                        <Form.Label column sm={3}>
-                                                            {method}
-                                                        </Form.Label>
-                                                    </Form.Group>
-                                                );
-                                            })
-                                        } */}
-                                    </Form.Group>
-                                );
-                            })
-                        }
-                    </Form.Group>
-                </Form>
-            </div>
-        );
-    };
 
     render() {
         return (
@@ -246,7 +118,7 @@ class Upload extends Component {
                 <br />
 
                 {/* Details */}
-                {this.fileData()}
+                {apiData(this.state)}
             </div>
         )
     }
