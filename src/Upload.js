@@ -1,97 +1,57 @@
 import { Component } from "react";
 import Axios from 'axios';
-import yaml from 'js-yaml';
 import './Upload.css';
 import {
     apiPrefix
 } from './Config';
-import {
-    parseFile
-} from './services/ParseFile';
-import { apiData } from "./services/ApiData";
 
 class Upload extends Component {
     constructor(props) {
         super(props);
         this.state = {
             selectedFile: null,
-            fileObj: null,
-            fileDetails: null,
         }
         this.handleFileChange = this.handleFileChange.bind(this);
-        this.handleUploadButtonClick = this.handleUploadButtonClick.bind(this);
+        this.handleRawUploadButtonClick = this.handleRawUploadButtonClick.bind(this);
+        this.handleJsonUploadButtonClick = this.handleJsonUploadButtonClick.bind(this);
     }
 
     handleFileChange(evt) {
         this.setState(
-            { selectedFile: evt.target.files[0]},
-            () => this.getFileDetails()
+            { selectedFile: evt.target.files[0] },
         );// Get file data
     }
 
-    // Get file details
-    getFileDetails() {
-        const that = this;
-        let fileReader = new FileReader();
+    handleRawUploadButtonClick() {
+        var bodyFormData = new FormData();
+        bodyFormData.append('raw', this.state.selectedFile);
 
-        fileReader.onloadend = async(e) => {
-            try {
-                const details = yaml.safeLoad(fileReader.result);
-
-                // Validate API file
-                Axios
-                .post(
-                    `${apiPrefix}/validate`, 
-                    {
-                        "apiVersion": parseInt(details['swagger'] !== undefined ? details['swagger'] : details['openapi']),
-                        "file": details,
-                    }
-                )
-                .then(function (response) {
-                    let valid = response.data['response']
-
-                    if (!valid) {
-                        alert("Invalid File");
-                        that.setState({selectedFile: null});
-                        document.getElementById("file").value = "";
-                    } else {
-                        that.setState(
-                            {fileObj: details},
-                            () => {
-                                that.parseFileDetails(details);
-                            }
-                        );
-                    }
-                })
-            } catch (error) {
-                alert("Invalid File");
-                that.setState({selectedFile: null});
-                document.getElementById("file").value = "";
-            }
-        };
-        fileReader.readAsBinaryString(this.state.selectedFile);
-    }
-
-    // Parse file details
-    parseFileDetails(details) {
-        let fileDetails = parseFile(details);
-        this.setState({
-            fileDetails: fileDetails,
+        Axios({
+            method: "post",
+            url: `${apiPrefix}/swaggerspec`,
+            data: bodyFormData,
+            headers: { "Content-Type": "multipart/form-data" },
         })
+        .then(function (response) {
+            alert("Uploaded");
+        })
+        .catch(function (err) {
+            alert(err);
+        });
     }
 
-    handleUploadButtonClick() {
-        const data = {
-            "name": this.state.selectedFile.name,
-            "title": this.state.fileDetails.info['title'],
-            "version": this.state.fileDetails.apiVersion,
-            "file": this.state.fileObj,
-        };
+    handleJsonUploadButtonClick() {
+        var bodyFormData = new FormData();
+        bodyFormData.append('JSON', this.state.selectedFile);
 
-        Axios
-        .post(`${apiPrefix}/upload`, data)
+        Axios({
+            method: "post",
+            url: `${apiPrefix}/swaggerspec`,
+            data: bodyFormData,
+            headers: { "Content-Type": "multipart/form-data" },
+        })
         .then(function (response) {
-            alert(response.data['response']);
+            alert("Uploaded");
         })
         .catch(function (err) {
             alert(err);
@@ -105,20 +65,15 @@ class Upload extends Component {
 
                 <div>
                     <label>Choose API file to upload:</label>
-                    <input id="file" type="file" name="api" accept=".yaml" onChange={this.handleFileChange} />
+                    <input id="file" type="file" name="api" accept=".yaml, .json" onChange={this.handleFileChange} />
                 </div>
 
                 <br />
 
                 <div>
-                    <button onClick={this.handleUploadButtonClick}>Upload</button>
+                    <button onClick={this.handleRawUploadButtonClick}>Upload Raw file</button>
+                    <button onClick={this.handleJsonUploadButtonClick}>Upload Base64 JSON</button>
                 </div>
-
-                <br />
-                <br />
-
-                {/* Details */}
-                {apiData(this.state)}
             </div>
         )
     }

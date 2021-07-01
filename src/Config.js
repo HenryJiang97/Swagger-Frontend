@@ -1,4 +1,4 @@
-const apiPrefix = "http://localhost:5000";
+const apiPrefix = "http://localhost:8080";
 
 export {
     apiPrefix,

@@ -3,33 +3,52 @@ import { Component } from "react";
 import {
     apiPrefix
 } from './Config';
-import { apiData } from "./services/ApiData";
-import {
-    parseFile
-} from './services/ParseFile';
+import { Info } from "./models/info";
 
 export default class Details extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            fileName: this.props.location.query.fileName,
-            fileDetails: null,
+            id: this.props.location.query.id,
+            info: null,
+            paths: null,
         }
     }
 
     componentDidMount() {
-        this.getFileDetais();
+        this.getInfo();
+        this.getPaths();
     }
 
-    getFileDetais() {
+    getInfo() {
         const that = this;
         Axios
-        .get(`${apiPrefix}/download/${this.state.fileName}`)
+        .get(`${apiPrefix}/swaggerspec/${this.props.location.query.id}/parse/info`)
         .then(function (response) {
-            const obj = response.data['file'][0][0];
-            let fileDetails = parseFile(obj);
+            const obj = response.data;
+            let info = new Info(
+                obj['title'] == null ? "" : obj['title'],
+                obj['version'] == null ? "" : obj['version'],
+                obj['description'] == null ? "" : obj['description'],
+                obj['basePath'] == null ? "" : obj['basePath'],
+                obj['host'] == null ? "" : obj['host'],
+            )
             that.setState({
-                fileDetails: fileDetails,
+                info: info,
+            });
+        })
+        .catch(function (err) {
+            alert(err);
+        })
+    }
+
+    getPaths() {
+        const that = this;
+        Axios
+        .get(`${apiPrefix}/swaggerspec/${this.props.location.query.id}/parse/paths`)
+        .then(function (response) {
+            that.setState({
+                paths: response.data,
             });
         })
         .catch(function (err) {
@@ -40,7 +59,14 @@ export default class Details extends Component {
     render() {
         return (
             <div>
-                {apiData(this.state)}
+                <div>
+                    <h3>Info</h3>
+                    {JSON.stringify(this.state.info)}
+                </div>
+                <div>
+                    <h3>Paths</h3>
+                    {JSON.stringify(this.state.paths)}
+                </div>
             </div>
         );
     };
